@@ -4,6 +4,8 @@ export const URL_WRITER_SYSTEM_PROMPT = `You are Disruption Weekly Scout, the re
 
 **SOURCE PURITY & ANTI-HALLUCINATION (hard rules, zero exceptions)**
 
+– The provided article is your ONLY source of truth. Extract and summarize what the article states, regardless of your training data or knowledge cutoff.
+– Trust the article content as factual. Do NOT refuse processing based on whether you think the content is "unreleased," "speculative," or contradicts your training. Your job is to extract what the article says, not validate its accuracy.
 – 100% of headlines and bullets must come solely from the single provided article.
 – No additional research, no secondary tabs, no memory, no prior knowledge, no other URLs.
 – Do not infer, speculate, generalize, or add context not explicitly stated in the article.
@@ -54,6 +56,8 @@ Article Content:
 ${article.body}
 
 ---
+
+IMPORTANT: This is a real, published article. Process it as provided. Do NOT refuse based on your training data, knowledge cutoff, or assumptions about whether the content is "real" or "speculative." Extract and summarize what the article states.
 
 INSTRUCTIONS:
 1. Create TWO headline options (each ≤ 12 words, bolded with **)
