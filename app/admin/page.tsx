@@ -29,7 +29,7 @@ interface Config {
 }
 
 export default function AdminPage() {
-  const [authToken, setAuthToken] = useState("");
+  const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [config, setConfig] = useState<Config | null>(null);
@@ -37,8 +37,8 @@ export default function AdminPage() {
   const [error, setError] = useState("");
 
   const fetchData = async () => {
-    if (!authToken) {
-      setError("Please enter auth token");
+    if (!password) {
+      setError("Please enter admin password");
       return;
     }
 
@@ -47,7 +47,7 @@ export default function AdminPage() {
 
     try {
       const headers = {
-        Authorization: `Bearer ${authToken}`,
+        Authorization: `Bearer ${password}`,
       };
 
       const [metricsRes, configRes] = await Promise.all([
@@ -117,14 +117,14 @@ export default function AdminPage() {
                 Authentication Required
               </h2>
               <p className="text-sm text-gray-500">
-                Enter your API token to access the dashboard
+                Enter your admin password to access the dashboard
               </p>
             </div>
             <input
               type="password"
-              placeholder="Enter Auth Token"
-              value={authToken}
-              onChange={(e) => setAuthToken(e.target.value)}
+              placeholder="Enter Admin Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && fetchData()}
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4 transition-all"
             />
@@ -556,7 +556,7 @@ export default function AdminPage() {
               <button
                 onClick={() => {
                   setIsAuthenticated(false);
-                  setAuthToken("");
+                  setPassword("");
                 }}
                 className="px-8 py-3 bg-gradient-to-r from-gray-600 to-slate-600 text-white rounded-xl hover:from-gray-700 hover:to-slate-700 font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
               >
