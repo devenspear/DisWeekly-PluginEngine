@@ -17,7 +17,7 @@ export async function processWithAnthropic(article: {
   const client = new Anthropic({ apiKey });
 
   const message = await client.messages.create({
-    model: "claude-3-sonnet-20240229",
+    model: "claude-3-opus-20240229",
     max_tokens: 2048,
     system: URL_WRITER_SYSTEM_PROMPT,
     messages: [
