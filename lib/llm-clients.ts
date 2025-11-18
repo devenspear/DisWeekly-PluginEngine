@@ -30,9 +30,12 @@ export async function processWithAnthropic(article: {
 
   const responseText = message.content[0].type === "text" ? message.content[0].text : "";
 
+  console.log("Claude Opus response:", responseText);
+
   const parsed = parseWebResponse(responseText);
   if (!parsed) {
-    throw new Error("Failed to parse Anthropic response");
+    console.error("Failed to parse response. Raw response:", responseText);
+    throw new Error(`Failed to parse Anthropic response. First 500 chars: ${responseText.substring(0, 500)}`);
   }
 
   return {
