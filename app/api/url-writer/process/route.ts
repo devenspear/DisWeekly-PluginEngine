@@ -2,9 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateAuth, createAuthErrorResponse } from "@/lib/auth";
 import { processArticle } from "@/lib/llm-clients";
 import { validateArticleContent, validateOutput } from "@/lib/validation";
+import { metrics } from "@/lib/metrics";
 import type { CaptureRequest, UrlWriterOutput } from "@/types";
 
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
+
   try {
     // Validate authentication
     const authResult = validateAuth(request);
@@ -23,6 +26,9 @@ export async function POST(request: NextRequest) {
     });
 
     if (!contentValidation.valid) {
+      const responseTime = Date.now() - startTime;
+      metrics.trackProcessing(responseTime, "reject");
+
       const response: UrlWriterOutput = {
         status: "reject",
         reason: "article_validation_failed",
@@ -44,6 +50,9 @@ export async function POST(request: NextRequest) {
 
     if (!outputValidation.valid) {
       console.error("LLM output validation failed:", outputValidation.errors);
+      const responseTime = Date.now() - startTime;
+      metrics.trackProcessing(responseTime, "reject");
+
       const response: UrlWriterOutput = {
         status: "reject",
         reason: "output_validation_failed",
@@ -72,10 +81,16 @@ export async function POST(request: NextRequest) {
       },
     };
 
+    const responseTime = Date.now() - startTime;
+    metrics.trackProcessing(responseTime, "ok");
+
     console.log(`Successfully processed article ${articleId}: ${body.url}`);
     return NextResponse.json(response);
   } catch (error) {
     console.error("Error processing article:", error);
+
+    const responseTime = Date.now() - startTime;
+    metrics.trackProcessing(responseTime, "error");
 
     const response: UrlWriterOutput = {
       status: "error",

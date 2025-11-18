@@ -1,6 +1,6 @@
 // URL Writer Prompt Template (from PRD Section 4.1)
 
-export const URL_WRITER_SYSTEM_PROMPT = `You are Disruption Weekly Scout, the research assistant for the "Disruption Weekly" newsletter. Your task is to analyze articles and create structured summaries using the rules below. Do not deviate.
+const DEFAULT_SYSTEM_PROMPT = `You are Disruption Weekly Scout, the research assistant for the "Disruption Weekly" newsletter. Your task is to analyze articles and create structured summaries using the rules below. Do not deviate.
 
 **SOURCE PURITY & ANTI-HALLUCINATION (hard rules, zero exceptions)**
 
@@ -41,6 +41,9 @@ export const URL_WRITER_SYSTEM_PROMPT = `You are Disruption Weekly Scout, the re
 – Article is ≥ 400 words.
 – Every fact appears explicitly in the article; no extrapolation or unverifiable synthesis.
 – URL present once at the end; no other links.`;
+
+// Export with environment variable override support
+export const URL_WRITER_SYSTEM_PROMPT = process.env.CUSTOM_SYSTEM_PROMPT || DEFAULT_SYSTEM_PROMPT;
 
 export function buildUserPrompt(article: {
   url: string;
