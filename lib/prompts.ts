@@ -83,48 +83,62 @@ export function parseWebResponse(response: string): {
   url: string;
 } | null {
   try {
-    const lines = response.trim().split("\n").filter(Boolean);
+    const lines = response.trim().split("\n");
 
-    // Find headlines (lines starting with **)
-    const headlines = lines.filter((line) =>
-      line.trim().startsWith("**")
-    );
+    // Find headlines (lines containing **)
+    const headlines = lines
+      .filter((line) => line.includes("**"))
+      .map((line) => line.replace(/\*\*/g, "").trim())
+      .filter(Boolean);
 
     if (headlines.length < 2) {
-      console.error("Not enough headlines found", { headlines });
+      console.error("Not enough headlines found", { headlines, response });
       return null;
     }
 
-    // Find bullets (lines starting with -)
+    // Find bullets (lines starting with -, •, or numbered)
     const bullets = lines
-      .filter((line) => line.trim().startsWith("-"))
-      .map((line) => line.trim().replace(/^-\s*/, ""));
+      .filter((line) => {
+        const trimmed = line.trim();
+        return trimmed.startsWith("-") ||
+               trimmed.startsWith("•") ||
+               /^\d+\./.test(trimmed);
+      })
+      .map((line) => line.trim().replace(/^[-•]\s*/, "").replace(/^\d+\.\s*/, ""))
+      .filter(Boolean);
 
-    if (bullets.length !== 6) {
-      console.error("Expected 6 bullets, got", bullets.length, { bullets });
+    // Accept 5-7 bullets (flexible for minor variations)
+    if (bullets.length < 5 || bullets.length > 7) {
+      console.error("Expected 6 bullets, got", bullets.length, { bullets, response });
       return null;
     }
 
-    // Find URL (last line that looks like a URL)
+    // Take first 6 bullets if there are more
+    const finalBullets = bullets.slice(0, 6);
+
+    // Find URL (any line containing http:// or https://)
     const urlLine = lines
+      .slice()
       .reverse()
-      .find(
-        (line) => line.includes("http://") || line.includes("https://")
-      );
+      .find((line) => line.includes("http://") || line.includes("https://"));
 
     if (!urlLine) {
-      console.error("No URL found in response");
+      console.error("No URL found in response", { response });
       return null;
     }
 
+    // Extract just the URL from the line
+    const urlMatch = urlLine.match(/(https?:\/\/[^\s]+)/);
+    const url = urlMatch ? urlMatch[1] : urlLine.trim();
+
     return {
-      headlinePrimary: headlines[0].trim(),
-      headlineSecondary: headlines[1].trim(),
-      bullets,
-      url: urlLine.trim(),
+      headlinePrimary: headlines[0],
+      headlineSecondary: headlines[1],
+      bullets: finalBullets,
+      url,
     };
   } catch (error) {
-    console.error("Error parsing LLM response:", error);
+    console.error("Error parsing LLM response:", error, { response });
     return null;
   }
 }
