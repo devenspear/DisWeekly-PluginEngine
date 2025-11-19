@@ -17,6 +17,14 @@ export async function POST(request: NextRequest) {
       return createAuthErrorResponse(authResult.error || "Authentication failed");
     }
 
+    // Check for override parameter
+    const { searchParams } = new URL(request.url);
+    const override = searchParams.get("override") === "true";
+
+    if (override) {
+      console.log("⚠️  Override mode enabled - skipping fact verification");
+    }
+
     // Parse request body
     const body: CaptureRequest = await request.json();
 
@@ -40,11 +48,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Process with LLM
-    console.log(`Processing article: ${body.url}`);
+    console.log(`Processing article: ${body.url}${override ? " (OVERRIDE MODE)" : ""}`);
     const llmOutput = await processArticle({
       url: body.url,
       title: body.title,
       body: body.body,
+      override,
     });
 
     // Validate LLM output
@@ -63,9 +72,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(response, { status: 400 });
     }
 
-    // Verify facts against source article (if enabled)
+    // Verify facts against source article (if enabled and not overridden)
     let factVerification;
-    if (VERIFICATION_CONFIG.enabled) {
+    if (VERIFICATION_CONFIG.enabled && !override) {
       factVerification = verifyBullets(
         llmOutput.bullets,
         body.body,
@@ -93,6 +102,8 @@ export async function POST(request: NextRequest) {
       }
 
       console.log(`Fact verification passed with ${factVerification.averageConfidence}% confidence`);
+    } else if (override) {
+      console.warn("⚠️  Override enabled - skipping fact verification");
     } else {
       console.warn("⚠️  Fact verification is disabled - skipping verification step");
     }

@@ -10,14 +10,28 @@ interface MetricsData {
   startTime: string;
 }
 
+// Use globalThis to persist across warm starts in Edge Runtime
+declare global {
+  var metricsData: MetricsData | undefined;
+}
+
 class MetricsTracker {
-  private data: MetricsData = {
-    totalArticlesProcessed: 0,
-    totalArticlesRejected: 0,
-    totalErrors: 0,
-    responseTimesMs: [],
-    startTime: new Date().toISOString(),
-  };
+  private get data(): MetricsData {
+    if (!globalThis.metricsData) {
+      globalThis.metricsData = {
+        totalArticlesProcessed: 0,
+        totalArticlesRejected: 0,
+        totalErrors: 0,
+        responseTimesMs: [],
+        startTime: new Date().toISOString(),
+      };
+    }
+    return globalThis.metricsData;
+  }
+
+  private set data(value: MetricsData) {
+    globalThis.metricsData = value;
+  }
 
   trackProcessing(responseTimeMs: number, status: "ok" | "reject" | "error") {
     this.data.responseTimesMs.push(responseTimeMs);
@@ -69,7 +83,7 @@ class MetricsTracker {
   }
 
   reset() {
-    this.data = {
+    globalThis.metricsData = {
       totalArticlesProcessed: 0,
       totalArticlesRejected: 0,
       totalErrors: 0,

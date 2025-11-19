@@ -38,11 +38,11 @@ export function validateBullet(bullet: string): {
     return { valid: false, wordCount: 0, error: "Bullet is empty" };
   }
 
-  if (wordCount < 11) {
+  if (wordCount < 10) {
     return {
       valid: false,
       wordCount,
-      error: `Bullet has ${wordCount} words (min 11)`,
+      error: `Bullet has ${wordCount} words (min 10)`,
     };
   }
 

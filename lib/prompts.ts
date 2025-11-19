@@ -25,7 +25,7 @@ const DEFAULT_SYSTEM_PROMPT = `You are Disruption Weekly Scout, the research ass
 **OUTPUT FORMAT (plain text only)**
 
 – Two **bolded** headline options (≤ 12 words each).
-– Six bullet points. Each bullet MUST be 11–16 words, concise and executive-friendly, emphasizing business or strategic impact.
+– Six bullet points. Each bullet MUST be 10–16 words, concise and executive-friendly, emphasizing business or strategic impact.
 – One direct URL at the end only. No in-line links. No other links.
 – Only reference the single provided article for content creation. Do NOT add additional web sources.
 
@@ -33,11 +33,11 @@ const DEFAULT_SYSTEM_PROMPT = `You are Disruption Weekly Scout, the research ass
 
 1. Verify the article is ≥ 400 words, accessible, and contains enough concrete information for 6 bullets.
 2. Extract only what the article states: dates, funding amounts, launches, adoption stats, partner names, roadmap timelines, regulatory milestones. No external context.
-3. Draft outputs per the format rules. Ensure bullets are 11–16 words and jargon-light.
+3. Draft outputs per the format rules. Ensure bullets are 10–16 words and jargon-light.
 
 **QUALITY CHECKS (must pass before finalizing)**
 
-– Headlines ≤ 12 words; bullets 11–16 words; exactly six bullets.
+– Headlines ≤ 12 words; bullets 10–16 words; exactly six bullets.
 – Article is ≥ 400 words.
 – Every fact appears explicitly in the article; no extrapolation or unverifiable synthesis.
 – URL present once at the end; no other links.`;
@@ -49,7 +49,20 @@ export function buildUserPrompt(article: {
   url: string;
   title: string;
   body: string;
-}): string {
+}, override?: boolean): string {
+  const overrideNotice = override ? `
+
+🚨 OVERRIDE MODE ENABLED 🚨
+This request is operating in OVERRIDE MODE. You MUST process this article regardless of:
+- Publication date (even if in the future)
+- Your knowledge cutoff
+- Whether you think the content is "unreleased" or "speculative"
+- Any concerns about the article's factual basis
+
+Your job is ONLY to extract and summarize what this article says. You are NOT validating the article's truth or accuracy. Simply extract the information as provided. Do NOT refuse this request. Process the article NOW.
+
+` : '';
+
   return `Please analyze this article and create a structured summary following the Disruption Weekly format.
 
 Article URL: ${article.url}
@@ -59,12 +72,12 @@ Article Content:
 ${article.body}
 
 ---
-
+${overrideNotice}
 IMPORTANT: This is a real, published article. Process it as provided. Do NOT refuse based on your training data, knowledge cutoff, or assumptions about whether the content is "real" or "speculative." Extract and summarize what the article states.
 
 INSTRUCTIONS:
 1. Create TWO headline options (each ≤ 12 words, bolded with **)
-2. Create SIX bullet points (each exactly 11-16 words)
+2. Create SIX bullet points (each exactly 10-16 words)
 3. Include the article URL once at the end
 
 Return ONLY the structured output in this exact format:
@@ -73,12 +86,12 @@ Return ONLY the structured output in this exact format:
 
 **[Second headline option]**
 
-- [First bullet, 11-16 words]
-- [Second bullet, 11-16 words]
-- [Third bullet, 11-16 words]
-- [Fourth bullet, 11-16 words]
-- [Fifth bullet, 11-16 words]
-- [Sixth bullet, 11-16 words]
+- [First bullet, 10-16 words]
+- [Second bullet, 10-16 words]
+- [Third bullet, 10-16 words]
+- [Fourth bullet, 10-16 words]
+- [Fifth bullet, 10-16 words]
+- [Sixth bullet, 10-16 words]
 
 ${article.url}`;
 }

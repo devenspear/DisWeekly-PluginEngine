@@ -8,6 +8,7 @@ export async function processWithAnthropic(article: {
   url: string;
   title: string;
   body: string;
+  override?: boolean;
 }): Promise<LLMResponse> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -23,7 +24,7 @@ export async function processWithAnthropic(article: {
     messages: [
       {
         role: "user",
-        content: buildUserPrompt(article),
+        content: buildUserPrompt(article, article.override),
       },
     ],
   });
@@ -147,6 +148,7 @@ export async function processArticle(article: {
   url: string;
   title: string;
   body: string;
+  override?: boolean;
 }): Promise<LLMResponse> {
   const provider = process.env.LLM_PROVIDER || "anthropic";
 
