@@ -28,6 +28,7 @@ export type UrlWriterOutput = {
     headlinesWordCounts: number[];
     bulletsWordCounts: number[];
     sourcePurityChecksPassed: boolean;
+    factVerificationConfidence?: number;
   };
   reason?: string;
   details?: string;
@@ -60,5 +61,6 @@ export type ArticleRecord = {
     headlinesWordCounts: number[];
     bulletsWordCounts: number[];
     sourcePurityChecksPassed: boolean;
+    factVerificationConfidence?: number;
   };
 };

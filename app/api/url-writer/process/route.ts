@@ -3,6 +3,8 @@ import { validateAuth, createAuthErrorResponse } from "@/lib/auth";
 import { processArticle } from "@/lib/llm-clients";
 import { validateArticleContent, validateOutput } from "@/lib/validation";
 import { metrics } from "@/lib/metrics";
+import { verifyBullets } from "@/lib/fact-verification";
+import { VERIFICATION_CONFIG } from "@/lib/verification-config";
 import type { CaptureRequest, UrlWriterOutput } from "@/types";
 
 export async function POST(request: NextRequest) {
@@ -61,6 +63,40 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(response, { status: 400 });
     }
 
+    // Verify facts against source article (if enabled)
+    let factVerification;
+    if (VERIFICATION_CONFIG.enabled) {
+      factVerification = verifyBullets(
+        llmOutput.bullets,
+        body.body,
+        VERIFICATION_CONFIG.minPassingBullets,
+        VERIFICATION_CONFIG.minAverageConfidence
+      );
+
+      if (!factVerification.passed) {
+        console.error("Fact verification failed:", factVerification.rejectionReason);
+        console.error("Verification details:", factVerification.bulletResults.map(br => ({
+          bullet: br.bullet,
+          confidence: br.confidenceScore,
+          missing: br.factsMissing,
+        })));
+
+        const responseTime = Date.now() - startTime;
+        metrics.trackProcessing(responseTime, "reject");
+
+        const response: UrlWriterOutput = {
+          status: "reject",
+          reason: "fact_verification_failed",
+          details: factVerification.rejectionReason || "Generated content contains facts not found in source article",
+        };
+        return NextResponse.json(response, { status: 400 });
+      }
+
+      console.log(`Fact verification passed with ${factVerification.averageConfidence}% confidence`);
+    } else {
+      console.warn("⚠️  Fact verification is disabled - skipping verification step");
+    }
+
     // Create successful response
     const articleId = crypto.randomUUID();
     const response: UrlWriterOutput = {
@@ -77,7 +113,8 @@ export async function POST(request: NextRequest) {
         bulletsCount: llmOutput.bullets.length,
         headlinesWordCounts: outputValidation.headlinesWordCounts,
         bulletsWordCounts: outputValidation.bulletsWordCounts,
-        sourcePurityChecksPassed: true, // LLM enforced this via prompt
+        sourcePurityChecksPassed: factVerification?.passed ?? false,
+        factVerificationConfidence: factVerification?.averageConfidence,
       },
     };
 
